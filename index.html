@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#fff8ec">
+<title>20以内加减法</title>
+<style>
+:root{
+  --bg:#fff8ec; --card:#ffffff; --ink:#3b2f2a; --muted:#8a7a70; --line:#f0e1cb;
+  --primary:#ff8a3d; --primary-dark:#e36f24;
+  --green:#2fb36f; --green-dark:#23915a;
+  --blue:#3d8bff; --pink:#ff6f91; --yellow:#ffc93c;
+  --dotA:#ff8a3d; --dotB:#3d8bff; --empty:#f3eadb;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif}
+body{min-height:100vh;min-height:100dvh}
+button{font-family:inherit;touch-action:manipulation;cursor:pointer;border:none;color:inherit;
+  -webkit-user-select:none;user-select:none}
+button:disabled{opacity:.45;cursor:default}
+[hidden]{display:none!important}
+.screen{max-width:540px;margin:0 auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
+
+/* ---------- 首页 ---------- */
+.title{font-size:36px;text-align:center;margin:14px 0 2px;color:var(--primary-dark);
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;position:relative}
+.title::after{content:"";position:absolute;left:25%;bottom:-6px;height:5px;width:0;
+  background:var(--primary);border-radius:3px}
+.title.pressing::after{width:50%;transition:width 3s linear}
+.sub{text-align:center;color:var(--muted);margin:10px 0 14px;font-size:18px}
+.card{background:var(--card);border-radius:24px;padding:14px 16px 16px;box-shadow:0 4px 0 var(--line)}
+.card h2{font-size:20px;margin:10px 0 8px}
+.levels{display:grid;gap:10px}
+.opt{min-height:60px;border-radius:18px;background:#fffaf2;border:3px solid var(--line);
+  font-size:20px;padding:8px 14px;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.opt small{color:var(--muted);font-size:16px;white-space:nowrap}
+.opt.on{border-color:var(--primary);background:#fff0e0}
+.seg{display:flex;gap:10px}
+.seg button{flex:1;min-height:60px;padding:0 4px;white-space:nowrap;border-radius:30px;background:#fffaf2;border:3px solid var(--line);font-size:20px}
+.seg button.on{border-color:var(--primary);background:#fff0e0;font-weight:bold}
+.note{color:var(--muted);font-size:16px;margin:6px 0 0;min-height:1em}
+.big{display:block;width:100%;min-height:64px;font-size:24px;border-radius:32px;margin:14px 0;
+  background:#fff;box-shadow:0 5px 0 var(--line);font-weight:bold}
+.big:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line)}
+.primary{background:var(--primary);color:#fff;box-shadow:0 5px 0 var(--primary-dark)}
+.primary:active{box-shadow:0 2px 0 var(--primary-dark)}
+.tiny{text-align:center;color:#b9a898;font-size:14px;margin-top:18px}
+
+/* ---------- 做题页 ---------- */
+#play{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+.topbar{display:flex;align-items:center;gap:10px;font-size:18px}
+.topbar .grow{flex:1;text-align:center}
+.small{min-height:44px;padding:0 16px;border-radius:22px;background:#fff;box-shadow:0 3px 0 var(--line);font-size:17px}
+.stars{color:#f0a500;font-weight:bold}
+.timer{color:var(--muted)}
+.qbox{text-align:center;padding:10px 0}
+.question{font-size:clamp(46px,15vw,76px);font-weight:bold;margin:18px 0 6px;white-space:nowrap}
+.answer{display:inline-block;min-width:1.5em;border-bottom:6px dashed #e6cfae;color:var(--blue)}
+.answer.empty{color:#d8c4a8}
+.answer.reveal{color:var(--green);border-color:var(--green)}
+.feedback{min-height:64px;font-size:26px;font-weight:bold;line-height:1.35;padding:0 6px}
+.feedback.good{color:var(--green)}
+.feedback.soft{color:var(--primary-dark)}
+.feedback.show{color:var(--ink);font-size:22px}
+.feedback.show small{display:block;font-size:18px;font-weight:normal;color:var(--muted);margin-top:4px}
+.star{display:inline-block;color:var(--yellow);font-size:40px;vertical-align:middle;animation:pop .5s ease-out}
+.tools{display:flex;gap:12px;justify-content:center;margin:6px 0}
+.tool{min-height:52px;padding:0 20px;border-radius:26px;background:#fff;box-shadow:0 3px 0 var(--line);font-size:19px}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:auto;padding-top:10px}
+.key{min-height:64px;border-radius:20px;background:#fff;font-size:32px;font-weight:bold;box-shadow:0 4px 0 var(--line)}
+.key:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.key.del{background:#ffeaea;font-size:22px}
+.key.ok{background:var(--green);color:#fff;font-size:24px;box-shadow:0 4px 0 var(--green-dark)}
+.keypad.off .key{opacity:.5}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes pop{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.2);opacity:1}100%{transform:scale(1)}}
+
+/* ---------- 结果页 ---------- */
+.result-card{text-align:center}
+.result-card .score{font-size:44px;font-weight:bold;margin:8px 0;color:var(--primary-dark)}
+.result-stars{font-size:32px;color:var(--yellow);line-height:1.2;word-break:break-all;min-height:40px}
+.result-stars span{display:inline-block;animation:pop .4s ease-out both}
+.result-card p{font-size:20px;margin:8px 0}
+.list{list-style:none;padding:0;margin:8px 0;font-size:22px}
+.list li{display:flex;justify-content:space-between;padding:10px 4px;border-bottom:2px dashed var(--line)}
+.list li small{color:var(--muted);font-size:16px;align-self:center}
+
+/* ---------- 家长页 ---------- */
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0}
+.row .seg{flex:0 0 60%}
+.row label{font-size:18px}
+table{width:100%;border-collapse:collapse;font-size:17px}
+th,td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left}
+td.num,th.num{text-align:right}
+.danger{background:#ffeaea;color:#c33;box-shadow:0 5px 0 #f3c9c9}
+
+/* ---------- 提示弹窗 ---------- */
+.overlay{position:fixed;inset:0;background:rgba(60,40,20,.35);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.sheet{background:#fff;width:100%;max-width:540px;border-radius:26px 26px 0 0;
+  padding:18px 16px calc(18px + env(safe-area-inset-bottom));animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.hint-eq{text-align:center;font-size:30px;font-weight:bold;margin:0 0 10px}
+.frames{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:6px 0 12px}
+.frame{display:grid;grid-template-columns:repeat(5,clamp(22px,6vw,32px));grid-auto-rows:clamp(22px,6vw,32px);
+  gap:5px;padding:7px;border:3px solid #dcc7a6;border-radius:12px;background:#fffdf8}
+.cell{border-radius:50%;background:var(--empty);position:relative}
+.cell.a{background:var(--dotA)}
+.cell.b{background:var(--dotB)}
+.cell.x{background:#d6d6d6}
+.cell.x::after{content:"✕";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:#c33;font-weight:bold;font-size:clamp(16px,4.5vw,24px)}
+.cell.pop{animation:pop .6s ease-out both}
+.caption{font-size:21px;line-height:1.5;text-align:center;min-height:64px;margin:4px 0 10px}
+.caption b{color:var(--primary-dark)}
+.hint-nav{display:flex;gap:10px}
+.hint-nav button{flex:1;min-height:60px;border-radius:30px;font-size:20px;background:#fffaf2;border:3px solid var(--line)}
+.hint-nav button.go{background:var(--primary);color:#fff;border-color:var(--primary)}
+.step-dots{text-align:center;color:#dcc7a6;letter-spacing:6px;margin-bottom:6px}
+.step-dots .cur{color:var(--primary)}
+</style>
+</head>
+<body>
+
+<!-- ======================= 首页 ======================= -->
+<section id="home" class="screen">
+  <h1 id="title" class="title">20以内加减法</h1>
+  <p class="sub">每天练一练，越算越厉害！</p>
+  <div class="card">
+    <h2>选难度</h2>
+    <div class="levels" id="levelBtns">
+      <button class="opt" data-level="1">10以内加减法 <small>如 3+5</small></button>
+      <button class="opt" data-level="2">不进位加 · 不退位减 <small>如 12+5</small></button>
+      <button class="opt" data-level="3">进位加法 <small>如 8+5</small></button>
+      <button class="opt" data-level="4">退位减法 <small>如 13−6</small></button>
+      <button class="opt" data-level="0">综合练习 <small>全都有</small></button>
+    </div>
+    <h2>题目类型</h2>
+    <div class="seg" id="opBtns">
+      <button data-op="add">加法</button><button data-op="sub">减法</button><button data-op="mix">加减混合</button>
+    </div>
+    <p class="note" id="opNote"></p>
+    <h2>每轮题数</h2>
+    <div class="seg" id="countBtns">
+      <button data-count="10">10 题</button><button data-count="20">20 题</button>
+    </div>
+  </div>
+  <button id="startBtn" class="big primary">开始练习</button>
+  <button id="wrongBookBtn" class="big">错题本（<span id="wrongCount">0</span>）</button>
+  <p class="tiny">家长：长按上面的标题 3 秒，进入家长设置</p>
+</section>
+
+<!-- ======================= 做题页 ======================= -->
+<section id="play" class="screen" hidden>
+  <div class="topbar">
+    <button id="quitBtn" class="small">返回</button>
+    <span class="grow" id="progress">第 1 / 10 题</span>
+    <span class="timer" id="timer" hidden>0:00</span>
+    <span class="stars" id="starCount">★ 0</span>
+  </div>
+  <div class="qbox">
+    <div class="question" id="question">
+      <span id="qa">8</span> <span id="qop">+</span> <span id="qb">5</span> = <span id="answer" class="answer empty">?</span>
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <div class="tools">
+      <button class="tool" id="hintBtn">💡 提示</button>
+      <button class="tool" id="speakBtn" hidden>🔊 读题</button>
+    </div>
+    <button id="nextBtn" class="big primary" hidden>知道了，下一题</button>
+  </div>
+  <div class="keypad" id="keypad">
+    <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button>
+    <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
+    <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
+    <button class="key del" data-k="del">删除</button><button class="key" data-k="0">0</button><button class="key ok" data-k="ok">确定</button>
+  </div>
+</section>
+
+<!-- ======================= 结果页 ======================= -->
+<section id="result" class="screen" hidden>
+  <div class="card result-card">
+    <h2 style="font-size:26px;margin-top:6px">这一轮完成啦！</h2>
+    <div class="score" id="resScore">8 / 10</div>
+    <div class="result-stars" id="resStars"></div>
+    <p id="resStarText"></p>
+    <p id="resTime"></p>
+    <p id="resCheer" style="font-weight:bold;color:var(--green)"></p>
+  </div>
+  <div class="card" id="resWrongBox" style="margin-top:14px">
+    <h2>这一轮要多练的题</h2>
+    <ul class="list" id="resWrongList"></ul>
+  </div>
+  <button id="againBtn" class="big primary">再来一轮</button>
+  <button id="resPracticeBtn" class="big">练习错题</button>
+  <button id="resHomeBtn" class="big">回首页</button>
+</section>
+
+<!-- ======================= 错题本 ======================= -->
+<section id="wrongbook" class="screen" hidden>
+  <h1 class="title" style="font-size:30px">错题本</h1>
+  <div class="card">
+    <p id="wbEmpty" style="font-size:20px;text-align:center">错题本是空的，真棒！</p>
+    <ul class="list" id="wbList"></ul>
+    <p class="note">在"练习错题"里第一次就答对，这道题就会离开错题本。</p>
+  </div>
+  <button id="wbPracticeBtn" class="big primary">练习错题</button>
+  <button id="wbBackBtn" class="big">回首页</button>
+</section>
+
+<!-- ======================= 家长设置 ======================= -->
+<section id="parent" class="screen" hidden>
+  <h1 class="title" style="font-size:30px">家长设置</h1>
+  <div class="card">
+    <h2>默认设置</h2>
+    <div class="row"><label>默认难度</label>
+      <select id="pLevel" style="font-size:18px;min-height:48px;border-radius:12px;padding:0 8px;max-width:62%">
+        <option value="1">10以内加减法</option><option value="2">不进位加、不退位减</option>
+        <option value="3">进位加法</option><option value="4">退位减法</option><option value="0">综合练习</option>
+      </select></div>
+    <div class="row"><label>题目数量</label>
+      <div class="seg" id="pCount"><button data-v="10">10</button><button data-v="20">20</button></div></div>
+    <div class="row"><label>计时模式</label>
+      <div class="seg" id="pTimer"><button data-v="1">开</button><button data-v="0">关</button></div></div>
+    <div class="row" id="pSoundRow"><label>朗读题目</label>
+      <div class="seg" id="pSound"><button data-v="1">开</button><button data-v="0">关</button></div></div>
+    <p class="note" id="pSoundNote"></p>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>学习统计</h2>
+    <p class="note">正确率 = 第一次就答对的比例</p>
+    <table><thead><tr><th>难度</th><th class="num">做过</th><th class="num">正确率</th></tr></thead>
+      <tbody id="pStats"></tbody></table>
+    <h2 style="margin-top:18px">最常错的题</h2>
+    <ul class="list" id="pTopWrong"></ul>
+    <h2 style="margin-top:18px">最近的练习</h2>
+    <table><thead><tr><th>时间</th><th>内容</th><th class="num">答对</th><th class="num">用时</th></tr></thead>
+      <tbody id="pHistory"></tbody></table>
+  </div>
+
+  <button id="pClearBtn" class="big danger">清空所有记录</button>
+  <button id="pBackBtn" class="big primary">回首页</button>
+</section>
+
+<!-- ======================= 提示弹窗 ======================= -->
+<div class="overlay" id="hintLayer" hidden>
+  <div class="sheet">
+    <div class="step-dots" id="hintDots"></div>
+    <div class="hint-eq" id="hintEq"></div>
+    <div class="frames" id="hintFrames"></div>
+    <div class="caption" id="hintCaption"></div>
+    <div class="hint-nav">
+      <button id="hintPrev">上一步</button>
+      <button id="hintNext" class="go">下一步</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================================
+     第一部分：出题规则（纯计算，不碰页面，方便单独测试）
+     ===================================================================== -->
+<script id="core">
+'use strict';
+var LEVEL_NAMES = {1:'10以内加减法', 2:'不进位加法、不退位减法', 3:'进位加法', 4:'退位减法', 0:'综合练习'};
+
+// 生成一道题
+function makeQ(a, op, b) {
+  return {a: a, op: op, b: b, ans: op === '+' ? a + b : a - b, key: a + op + b};
+}
+
+// 列出某个难度 + 某种运算的全部题目
+function buildPool(level, op) {
+  var out = [], a, b;
+  if (level === 1) {                      // 10以内
+    if (op === '+') { for (a = 1; a <= 9; a++) for (b = 1; b <= 9; b++) if (a + b <= 10) out.push(makeQ(a, '+', b)); }
+    else            { for (a = 1; a <= 10; a++) for (b = 1; b <= a; b++) out.push(makeQ(a, '-', b)); }
+  } else if (level === 2) {               // 20以内不进位加、不退位减
+    if (op === '+') {
+      for (a = 1; a <= 19; a++) for (b = 1; b <= 19; b++) {
+        var s = a + b;
+        if (s < 11 || s > 20) continue;
+        if (a % 10 + b % 10 >= 10) continue;   // 个位相加满十 = 进位，不要
+        if (a < 10 && b < 10) continue;
+        out.push(makeQ(a, '+', b));
+      }
+    } else {
+      for (a = 11; a <= 20; a++) for (b = 1; b <= 10; b++) {
+        if (a % 10 < b % 10) continue;         // 个位不够减 = 退位，不要
+        out.push(makeQ(a, '-', b));
+      }
+    }
+  } else if (level === 3) {               // 进位加法：两个一位数，和是 11-18
+    if (op === '+') for (a = 2; a <= 9; a++) for (b = 2; b <= 9; b++) if (a + b >= 11) out.push(makeQ(a, '+', b));
+  } else if (level === 4) {               // 退位减法：十几减几，个位不够减
+    if (op === '-') for (a = 11; a <= 18; a++) for (b = 2; b <= 9; b++) if (a % 10 < b) out.push(makeQ(a, '-', b));
+  }
+  return out;
+}
+
+// 按难度和"加/减/混合"选出要用的题库
+function subPools(level, opMode) {
+  var levels = level === 0 ? [1, 2, 3, 4] : [level];
+  var ops = opMode === 'add' ? ['+'] : opMode === 'sub' ? ['-'] : ['+', '-'];
+  var res = [];
+  levels.forEach(function (lv) { ops.forEach(function (op) { var p = buildPool(lv, op); if (p.length) res.push(p); }); });
+  if (!res.length) {  // 例如"进位加法 + 只练减法"：没有这种题，就忽略加/减选择
+    levels.forEach(function (lv) { ['+', '-'].forEach(function (op) { var p = buildPool(lv, op); if (p.length) res.push(p); }); });
+  }
+  return res;
+}
+
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+
+// 出一轮题：每次随机挑一个题库，再从里面拿一道没出过的
+function generateRound(level, opMode, n) {
+  var pools = subPools(level, opMode).map(shuffle);
+  var idx = pools.map(function () { return 0; });
+  var out = [], used = {}, guard = 0;
+  while (out.length < n && guard < 10000) {
+    guard++;
+    var k = Math.floor(Math.random() * pools.length);
+    if (idx[k] >= pools[k].length) {
+      if (idx.every(function (v, i) { return v >= pools[i].length; })) break;
+      continue;
+    }
+    var q = pools[k][idx[k]++];
+    if (used[q.key]) continue;
+    used[q.key] = true; out.push(q);
+  }
+  var all = [].concat.apply([], pools);   // 题库不够时（实际不会发生）允许重复补足
+  while (out.length < n) out.push(all[Math.floor(Math.random() * all.length)]);
+  return out;
+}
+
+// 反过来判断一道题属于哪个难度（用来统计和自检）
+function classify(q) {
+  if (q.op === '+') {
+    if (q.a + q.b <= 10) return 1;
+    return (q.a % 10 + q.b % 10 >= 10) ? 3 : 2;
+  }
+  if (q.a <= 10) return 1;
+  return (q.a % 10 < q.b % 10) ? 4 : 2;
+}
+
+// 数字都在 0-20 之间、结果不为负、答案算对了
+function isValid(q) {
+  var inRange = function (x) { return Number.isInteger(x) && x >= 0 && x <= 20; };
+  return inRange(q.a) && inRange(q.b) && inRange(q.ans) &&
+         q.ans === (q.op === '+' ? q.a + q.b : q.a - q.b) && (q.op === '+' || q.op === '-');
+}
+
+// 数字转中文读法（0-20）
+function zh(n) {
+  var d = ['零','一','二','三','四','五','六','七','八','九','十'];
+  if (n <= 10) return d[n];
+  if (n < 20) return '十' + d[n - 10];
+  return '二十';
+}
+
+// 第二次答错时显示的一句话提示
+function simpleHint(q) {
+  var a = q.a, b = q.b, ans = q.ans, lv = classify(q);
+  if (q.op === '+') {
+    if (lv === 3) {
+      var big = Math.max(a, b), small = Math.min(a, b), need = 10 - big;
+      return big + ' 还差 ' + need + ' 个凑成 10，把 ' + small + ' 分成 ' + need + ' 和 ' + (small - need) +
+             '，10 + ' + (small - need) + ' = ' + ans;
+    }
+    if (lv === 2) {
+      var t = a >= 10 ? a : b, other = a >= 10 ? b : a, o = t - 10;
+      if (o === 0) return '10 + ' + other + ' = ' + ans + '，就是 1 个十和 ' + (ans - 10) + ' 个一';
+      return '把 ' + t + ' 分成 10 和 ' + o + '，' + o + ' + ' + other + ' = ' + (o + other) + '，10 + ' + (o + other) + ' = ' + ans;
+    }
+    var seq = []; for (var i = a + 1; i <= ans; i++) seq.push(i);
+    return '从 ' + a + ' 往后数 ' + b + ' 个：' + seq.join('、') + '，所以是 ' + ans;
+  }
+  if (lv === 4) {
+    return '把 ' + a + ' 分成 10 和 ' + (a - 10) + '，10 − ' + b + ' = ' + (10 - b) + '，' + (10 - b) + ' + ' + (a - 10) + ' = ' + ans;
+  }
+  if (lv === 2) {
+    if (b === 10) return a + ' 拿走 1 个十，还剩 ' + ans;
+    return '把 ' + a + ' 分成 10 和 ' + (a - 10) + '，' + (a - 10) + ' − ' + b + ' = ' + (a - 10 - b) + '，10 + ' + (a - 10 - b) + ' = ' + ans;
+  }
+  var seq2 = []; for (var j = a - 1; j >= ans; j--) seq2.push(j);
+  return '从 ' + a + ' 往前数 ' + b + ' 个：' + seq2.join('、') + '，所以是 ' + ans;
+}
+
+var CORE = {LEVEL_NAMES: LEVEL_NAMES, makeQ: makeQ, buildPool: buildPool, subPools: subPools,
+            generateRound: generateRound, classify: classify, isValid: isValid, zh: zh, simpleHint: simpleHint, shuffle: shuffle};
+</script>
+
+<!-- =====================================================================
+     第二部分：页面和互动
+     ===================================================================== -->
+<script>
+'use strict';
+var $ = function (id) { return document.getElementById(id); };
+
+/* ---------- 保存 / 读取（localStorage 读不到也能正常玩） ---------- */
+var STORE_KEY = 'math20_v1';
+function defaultData() {
+  return {
+    settings: {level: 1, count: 10, opMode: 'mix', timer: false, sound: true},
+    wrongBook: {},
+    stats: {levels: {1: {n: 0, c: 0}, 2: {n: 0, c: 0}, 3: {n: 0, c: 0}, 4: {n: 0, c: 0}}, wrongCounts: {}},
+    history: []
+  };
+}
+function loadData() {
+  var d = defaultData();
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p === 'object') {
+        var s = p.settings || {};
+        if ([0, 1, 2, 3, 4].indexOf(s.level) >= 0) d.settings.level = s.level;
+        if (s.count === 10 || s.count === 20) d.settings.count = s.count;
+        if (['add', 'sub', 'mix'].indexOf(s.opMode) >= 0) d.settings.opMode = s.opMode;
+        d.settings.timer = !!s.timer;
+        d.settings.sound = s.sound !== false;
+        if (p.wrongBook && typeof p.wrongBook === 'object') d.wrongBook = p.wrongBook;
+        if (p.stats && p.stats.levels) [1, 2, 3, 4].forEach(function (k) { if (p.stats.levels[k]) d.stats.levels[k] = p.stats.levels[k]; });
+        if (p.stats && p.stats.wrongCounts) d.stats.wrongCounts = p.stats.wrongCounts;
+        if (Array.isArray(p.history)) d.history = p.history;
+      }
+    }
+  } catch (e) { /* 读不到就用默认值 */ }
+  return d;
+}
+function saveData() { try { localStorage.setItem(STORE_KEY, JSON.stringify(D)); } catch (e) { /* 存不了也不影响做题 */ } }
+var D = loadData();
+
+/* ---------- 语音朗读（不支持中文语音就隐藏） ---------- */
+var zhVoice = null, speechOK = false;
+function initSpeech() {
+  try {
+    if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return;
+    var pick = function () {
+      try {
+        var vs = window.speechSynthesis.getVoices() || [];
+        zhVoice = vs.find(function (v) { return /^zh[-_](CN|Hans)/i.test(v.lang); }) ||
+                  vs.find(function (v) { return /^zh/i.test(v.lang) && !/HK|TW|yue/i.test(v.lang); }) ||
+                  vs.find(function (v) { return /^zh/i.test(v.lang); }) || null;
+        speechOK = !!zhVoice;
+        updateSoundUI();
+      } catch (e) {}
+    };
+    pick();
+    if (window.speechSynthesis.addEventListener) window.speechSynthesis.addEventListener('voiceschanged', pick);
+    else window.speechSynthesis.onvoiceschanged = pick;
+  } catch (e) { speechOK = false; }
+}
+function speak(text) {
+  if (!speechOK || !D.settings.sound) return;
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.voice = zhVoice; u.lang = zhVoice.lang; u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function speakable(s) {
+  return s.replace(/<[^>]+>/g, '').replace(/\+/g, '加').replace(/−/g, '减').replace(/=/g, '等于');
+}
+function qText(q) { return zh(q.a) + (q.op === '+' ? '加' : '减') + zh(q.b) + '等于几？'; }
+function updateSoundUI() {
+  $('speakBtn').hidden = !(speechOK && D.settings.sound);
+  $('pSoundRow').hidden = !speechOK;
+  $('pSoundNote').textContent = speechOK ? '' : '这台设备没有中文语音，朗读功能已自动关闭。';
+}
+
+/* ---------- 页面切换 ---------- */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(function (s) { s.hidden = s.id !== id; });
+  window.scrollTo(0, 0);
+}
+function fmtTime(secs) { var m = Math.floor(secs / 60), s = secs % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
+function fmtTimeZh(secs) { var m = Math.floor(secs / 60), s = secs % 60; return (m ? m + ' 分 ' : '') + s + ' 秒'; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function opSym(op) { return op === '+' ? '+' : '−'; }
+function qStr(q, withAns) { return q.a + ' ' + opSym(q.op) + ' ' + q.b + ' = ' + (withAns ? q.ans : '?'); }
+
+/* ---------- 首页 ---------- */
+function renderHome() {
+  var st = D.settings;
+  document.querySelectorAll('#levelBtns .opt').forEach(function (b) { b.classList.toggle('on', +b.dataset.level === st.level); });
+  var fixed = st.level === 3 || st.level === 4;
+  document.querySelectorAll('#opBtns button').forEach(function (b) {
+    b.classList.toggle('on', !fixed && b.dataset.op === st.opMode);
+    b.disabled = fixed;
+  });
+  $('opNote').textContent = st.level === 3 ? '进位加法都是加法题' : st.level === 4 ? '退位减法都是减法题' : '';
+  document.querySelectorAll('#countBtns button').forEach(function (b) { b.classList.toggle('on', +b.dataset.count === st.count); });
+  $('wrongCount').textContent = Object.keys(D.wrongBook).length;
+}
+$('levelBtns').addEventListener('click', function (e) {
+  var b = e.target.closest('.opt'); if (!b) return;
+  D.settings.level = +b.dataset.level; saveData(); renderHome();
+});
+$('opBtns').addEventListener('click', function (e) {
+  var b = e.target.closest('button'); if (!b || b.disabled) return;
+  D.settings.opMode = b.dataset.op; saveData(); renderHome();
+});
+$('countBtns').addEventListener('click', function (e) {
+  var b = e.target.closest('button'); if (!b) return;
+  D.settings.count = +b.dataset.count; saveData(); renderHome();
+});
+$('startBtn').addEventListener('click', function () { startRound(false); });
+$('wrongBookBtn').addEventListener('click', function () { renderWrongBook(); show('wrongbook'); });
+
+// 长按标题 3 秒进入家长设置
+(function () {
+  var t = null, title = $('title');
+  var start = function (e) {
+    e.preventDefault(); title.classList.add('pressing');
+    t = setTimeout(function () { title.classList.remove('pressing'); t = null; renderParent(); show('parent'); }, 3000);
+  };
+  var stop = function () { title.classList.remove('pressing'); if (t) { clearTimeout(t); t = null; } };
+  title.addEventListener('pointerdown', start);
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { title.addEventListener(ev, stop); });
+  title.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+})();
+
+/* ---------- 做题 ---------- */
+var PRAISE = ['太棒了！', '真聪明！', '你真厉害！', '答对啦！', '好样的！', '完全正确！', '算得真快！', '了不起！'];
+var R = null, timerId = null;
+
+function startRound(review) {
+  var qs, label;
+  if (review) {
+    var list = Object.keys(D.wrongBook).map(function (k) { var w = D.wrongBook[k]; return makeQ(w.a, w.op, w.b); });
+    if (!list.length) { renderHome(); show('home'); return; }
+    qs = shuffle(list).slice(0, 20); label = '错题练习';
+  } else {
+    qs = generateRound(D.settings.level, D.settings.opMode, D.settings.count);
+    label = LEVEL_NAMES[D.settings.level];
+  }
+  R = {qs: qs, i: 0, tries: 0, correct: 0, stars: 0, start: Date.now(), review: review, label: label,
+       wrongList: [], locked: false, input: '', recorded: false};
+  show('play');
+  clearInterval(timerId);
+  $('timer').hidden = !D.settings.timer;
+  if (D.settings.timer) {
+    $('timer').textContent = '0:00';
+    timerId = setInterval(function () { $('timer').textContent = fmtTime(Math.floor((Date.now() - R.start) / 1000)); }, 500);
+  }
+  updateSoundUI();
+  showQuestion();
+}
+
+function showQuestion() {
+  var q = R.qs[R.i];
+  R.tries = 0; R.input = ''; R.locked = false; R.recorded = false;
+  $('qa').textContent = q.a; $('qop').textContent = opSym(q.op); $('qb').textContent = q.b;
+  $('answer').classList.remove('reveal');
+  renderAnswer();
+  setFeedback('', '');
+  $('nextBtn').hidden = true;
+  $('keypad').classList.remove('off');
+  $('progress').textContent = '第 ' + (R.i + 1) + ' / ' + R.qs.length + ' 题';
+  $('starCount').textContent = '★ ' + R.stars;
+  speak(qText(q));
+}
+function renderAnswer() {
+  var el = $('answer');
+  el.textContent = R.input || '?';
+  el.classList.toggle('empty', !R.input);
+}
+function setFeedback(html, cls) { var f = $('feedback'); f.innerHTML = html; f.className = 'feedback' + (cls ? ' ' + cls : ''); }
+function shakeAnswer() { var el = $('answer'); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+
+function pressKey(k) {
+  if (!R || R.locked) return;
+  if (k === 'del') { R.input = R.input.slice(0, -1); renderAnswer(); return; }
+  if (k === 'ok') { submit(); return; }
+  if (R.input.length >= 2) return;
+  R.input = R.input === '0' ? k : R.input + k;
+  renderAnswer();
+}
+$('keypad').addEventListener('click', function (e) { var b = e.target.closest('.key'); if (b) pressKey(b.dataset.k); });
+document.addEventListener('keydown', function (e) {
+  if ($('play').hidden || !$('hintLayer').hidden) return;
+  if (/^[0-9]$/.test(e.key)) pressKey(e.key);
+  else if (e.key === 'Backspace') { e.preventDefault(); pressKey('del'); }
+  else if (e.key === 'Enter') pressKey('ok');
+});
+
+function recordWrong(q) {
+  var w = D.wrongBook[q.key] || {a: q.a, op: q.op, b: q.b, wrong: 0};
+  w.wrong++; w.last = Date.now();
+  D.wrongBook[q.key] = w;
+  D.stats.wrongCounts[q.key] = (D.stats.wrongCounts[q.key] || 0) + 1;
+  if (!R.wrongList.some(function (x) { return x.key === q.key; })) R.wrongList.push(q);
+}
+
+function submit() {
+  if (R.locked) return;
+  if (R.input === '') { shakeAnswer(); return; }
+  var q = R.qs[R.i], v = parseInt(R.input, 10), right = v === q.ans;
+  if (!R.recorded) {                      // 统计只看第一次作答
+    R.recorded = true;
+    var st = D.stats.levels[classify(q)]; st.n++; if (right) st.c++;
+  }
+  if (right) {
+    R.correct++; R.stars++; R.locked = true;
+    if (R.review && R.tries === 0) delete D.wrongBook[q.key];
+    saveData();
+    var p = pick(PRAISE);
+    setFeedback('<span class="star">★</span> ' + p, 'good');
+    $('starCount').textContent = '★ ' + R.stars;
+    $('keypad').classList.add('off');
+    speak(p);
+    setTimeout(nextQuestion, 1300);
+    return;
+  }
+  R.tries++;
+  if (R.tries === 1) {
+    recordWrong(q); saveData();
+    setFeedback('再想一想～', 'soft');
+    speak('再想一想');
+    R.input = ''; renderAnswer(); shakeAnswer();
+  } else {
+    R.locked = true; saveData();
+    R.input = String(q.ans); renderAnswer(); $('answer').classList.add('reveal');
+    setFeedback('没关系！正确答案是 ' + q.ans + '<small>' + simpleHint(q) + '</small>', 'show');
+    $('keypad').classList.add('off');
+    $('nextBtn').hidden = false;
+    speak('正确答案是' + zh(q.ans));
+  }
+}
+function nextQuestion() {
+  R.i++;
+  if (R.i >= R.qs.length) finishRound(); else showQuestion();
+}
+$('nextBtn').addEventListener('click', nextQuestion);
+$('speakBtn').addEventListener('click', function () { if (R) speak(qText(R.qs[R.i])); });
+$('quitBtn').addEventListener('click', function () {
+  if (confirm('要退出这一轮吗？')) { clearInterval(timerId); try { speechSynthesis.cancel(); } catch (e) {} renderHome(); show('home'); }
+});
+
+/* ---------- 结果 ---------- */
+function finishRound() {
+  clearInterval(timerId);
+  var secs = Math.round((Date.now() - R.start) / 1000), total = R.qs.length;
+  D.history.unshift({t: Date.now(), label: R.label, total: total, correct: R.correct, stars: R.stars, secs: secs});
+  D.history = D.history.slice(0, 30);
+  saveData();
+
+  $('resScore').textContent = '答对 ' + R.correct + ' / ' + total;
+  var sb = $('resStars'); sb.innerHTML = '';
+  for (var i = 0; i < R.stars; i++) { var s = document.createElement('span'); s.textContent = '★'; s.style.animationDelay = (i * 0.06) + 's'; sb.appendChild(s); }
+  $('resStarText').textContent = '得到 ' + R.stars + ' 颗星星';
+  $('resTime').textContent = '用时 ' + fmtTimeZh(secs);
+  var r = R.correct / total;
+  var cheer = r === 1 ? '全部答对，你是计算小能手！' : r >= 0.8 ? '真棒！再细心一点就全对啦！' :
+              r >= 0.5 ? '进步很大，继续加油！' : '每练一次都会更厉害，我们再来一轮吧！';
+  $('resCheer').textContent = cheer;
+
+  var ul = $('resWrongList'); ul.innerHTML = '';
+  R.wrongList.forEach(function (q) { var li = document.createElement('li'); li.textContent = qStr(q, true); ul.appendChild(li); });
+  $('resWrongBox').hidden = !R.wrongList.length;
+  var hasWrong = Object.keys(D.wrongBook).length > 0;
+  $('resPracticeBtn').hidden = !hasWrong;
+  $('againBtn').hidden = R.review && !hasWrong;
+  $('againBtn').textContent = R.review ? '再练一次错题' : '再来一轮';
+  show('result');
+  speak(cheer);
+}
+$('againBtn').addEventListener('click', function () { startRound(R.review); });
+$('resPracticeBtn').addEventListener('click', function () { startRound(true); });
+$('resHomeBtn').addEventListener('click', function () { renderHome(); show('home'); });
+
+/* ---------- 错题本 ---------- */
+function renderWrongBook() {
+  var keys = Object.keys(D.wrongBook).sort(function (x, y) { return D.wrongBook[y].wrong - D.wrongBook[x].wrong; });
+  var ul = $('wbList'); ul.innerHTML = '';
+  keys.forEach(function (k) {
+    var w = D.wrongBook[k], q = makeQ(w.a, w.op, w.b);
+    var li = document.createElement('li');
+    li.innerHTML = '<span>' + qStr(q, true) + '</span><small>错过 ' + w.wrong + ' 次</small>';
+    ul.appendChild(li);
+  });
+  $('wbEmpty').hidden = keys.length > 0;
+  $('wbPracticeBtn').disabled = !keys.length;
+}
+$('wbPracticeBtn').addEventListener('click', function () { startRound(true); });
+$('wbBackBtn').addEventListener('click', function () { renderHome(); show('home'); });
+
+/* ---------- 家长设置 ---------- */
+function setSeg(id, val) { document.querySelectorAll('#' + id + ' button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === String(val)); }); }
+function renderParent() {
+  var st = D.settings;
+  $('pLevel').value = String(st.level);
+  setSeg('pCount', st.count); setSeg('pTimer', st.timer ? 1 : 0); setSeg('pSound', st.sound ? 1 : 0);
+  updateSoundUI();
+
+  var tb = $('pStats'); tb.innerHTML = '';
+  [1, 2, 3, 4].forEach(function (lv) {
+    var s = D.stats.levels[lv], tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + LEVEL_NAMES[lv] + '</td><td class="num">' + s.n + ' 题</td><td class="num">' +
+                   (s.n ? Math.round(s.c / s.n * 100) + '%' : '—') + '</td>';
+    tb.appendChild(tr);
+  });
+
+  var wc = D.stats.wrongCounts, top = Object.keys(wc).sort(function (x, y) { return wc[y] - wc[x]; }).slice(0, 5);
+  var ul = $('pTopWrong'); ul.innerHTML = '';
+  if (!top.length) ul.innerHTML = '<li><span style="color:var(--muted);font-size:18px">还没有错题记录</span></li>';
+  top.forEach(function (k) {
+    var m = k.match(/^(\d+)([+-])(\d+)$/); if (!m) return;
+    var q = makeQ(+m[1], m[2], +m[3]), li = document.createElement('li');
+    li.innerHTML = '<span>' + qStr(q, true) + '</span><small>错 ' + wc[k] + ' 次</small>';
+    ul.appendChild(li);
+  });
+
+  var hb = $('pHistory'); hb.innerHTML = '';
+  if (!D.history.length) hb.innerHTML = '<tr><td colspan="4" style="color:var(--muted)">还没有练习记录</td></tr>';
+  D.history.slice(0, 10).forEach(function (h) {
+    var d = new Date(h.t), tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0') +
+                   '</td><td>' + h.label + '</td><td class="num">' + h.correct + '/' + h.total + '</td><td class="num">' + fmtTime(h.secs) + '</td>';
+    hb.appendChild(tr);
+  });
+}
+$('pLevel').addEventListener('change', function () { D.settings.level = +this.value; saveData(); });
+$('pCount').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; D.settings.count = +b.dataset.v; saveData(); renderParent(); });
+$('pTimer').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; D.settings.timer = b.dataset.v === '1'; saveData(); renderParent(); });
+$('pSound').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; D.settings.sound = b.dataset.v === '1'; saveData(); renderParent(); });
+$('pClearBtn').addEventListener('click', function () {
+  if (!confirm('确定要清空错题本、统计和练习记录吗？（设置会保留）')) return;
+  var keep = D.settings; D = defaultData(); D.settings = keep; saveData(); renderParent();
+});
+$('pBackBtn').addEventListener('click', function () { renderHome(); show('home'); });
+
+/* ---------- 提示：凑十法 / 破十法 / 十格框 ---------- */
+// 一个"步骤" = 20 个格子的状态 + 一句说明。格子状态：'' 空、'a' 橙点、'b' 蓝点、'x' 划掉；后缀 '*' 表示这一步新出现（有动画）
+function cellsFill(list) { var c = []; for (var i = 0; i < 20; i++) c.push(''); list.forEach(function (p) { c[p[0]] = p[1]; }); return c; }
+function range(from, to) { var r = []; for (var i = from; i < to; i++) r.push(i); return r; }
+
+function hintSteps(q) {
+  var a = q.a, b = q.b, ans = q.ans, lv = classify(q), steps = [];
+  if (q.op === '+' && lv === 3) {                          // 凑十法
+    var big = Math.max(a, b), small = Math.min(a, b), need = 10 - big, rest = small - need;
+    var base = range(0, big).map(function (i) { return [i, 'a']; });
+    steps.push({cells: cellsFill(base.concat(range(10, 10 + small).map(function (i) { return [i, 'b']; }))),
+      text: '<b>' + big + '</b> 个橙点，还差 <b>' + need + '</b> 个就满 10 啦。'});
+    steps.push({cells: cellsFill(base.concat(range(big, 10).map(function (i) { return [i, 'b*']; }),
+                                            range(10, 10 + rest).map(function (i) { return [i, 'b']; }))),
+      text: '从 ' + small + ' 里拿 <b>' + need + '</b> 个给 ' + big + '。<br>' + small + ' 分成 ' + need + ' 和 ' + rest + '。'});
+    steps.push({same: true, text: big + ' + ' + need + ' = <b>10</b>，凑满一个十！'});
+    steps.push({same: true, text: '10 再加剩下的 ' + rest + '：10 + ' + rest + ' = <b>' + ans + '</b><br>所以 ' + qStr(q, true)});
+  } else if (q.op === '-' && lv === 4) {                   // 破十法
+    var ones = a - 10, full = range(0, 10).map(function (i) { return [i, 'a']; }), onesCells = range(10, 10 + ones).map(function (i) { return [i, 'a']; });
+    steps.push({cells: cellsFill(full.concat(onesCells)), text: '把 ' + a + ' 分成 <b>10</b> 和 <b>' + ones + '</b>。'});
+    steps.push({cells: cellsFill(range(0, 10 - b).map(function (i) { return [i, 'a']; })
+                         .concat(range(10 - b, 10).map(function (i) { return [i, 'x*']; }), onesCells)),
+      text: ones + ' 个不够减 ' + b + '，就从 10 里减：<br>10 − ' + b + ' = <b>' + (10 - b) + '</b>'});
+    steps.push({same: true, text: '剩下的 ' + (10 - b) + ' 和 ' + ones + ' 合起来：<br>' + (10 - b) + ' + ' + ones + ' = <b>' + ans + '</b>，所以 ' + qStr(q, true)});
+  } else if (q.op === '+') {                               // 其他加法：十格框数一数
+    var first = a, second = b;
+    if (b >= 10 && a < 10) { first = b; second = a; }       // 先摆大的数，看得出"一个十"
+    var A = range(0, first).map(function (i) { return [i, 'a']; });
+    steps.push({cells: cellsFill(A), text: '先摆 <b>' + first + '</b> 个橙点。' + (first >= 10 ? '（满一格就是一个十）' : '')});
+    steps.push({cells: cellsFill(A.concat(range(first, first + second).map(function (i) { return [i, 'b*']; }))),
+      text: '再添上 <b>' + second + '</b> 个蓝点。数一数一共几个？'});
+    steps.push({same: true, text: lv === 1 ? '一共 <b>' + ans + '</b> 个。所以 ' + qStr(q, true) : simpleHint(q)});
+  } else {                                                 // 其他减法：划掉数一数
+    var all = range(0, a).map(function (i) { return [i, 'a']; });
+    var cross = (b === 10 && a >= 10) ? range(0, 10) : range(a - b, a);
+    steps.push({cells: cellsFill(all), text: '一共有 <b>' + a + '</b> 个圆点。'});
+    steps.push({cells: cellsFill(all.filter(function (p) { return cross.indexOf(p[0]) < 0; })
+                                    .concat(cross.map(function (i) { return [i, 'x*']; }))),
+      text: '划掉 <b>' + b + '</b> 个。'});
+    steps.push({same: true, text: lv === 1 ? '数一数，还剩 <b>' + ans + '</b> 个。所以 ' + qStr(q, true) : simpleHint(q)});
+  }
+  // "same" 的步骤沿用上一步的图，但去掉动画
+  for (var i = 0; i < steps.length; i++) {
+    if (steps[i].same) steps[i].cells = steps[i - 1].cells.map(function (c) { return c.replace('*', ''); });
+  }
+  return steps;
+}
+
+var H = {steps: [], i: 0, q: null};
+function openHint() {
+  if (!R) return;
+  H.q = R.qs[R.i]; H.steps = hintSteps(H.q); H.i = 0;
+  $('hintEq').textContent = qStr(H.q, false);
+  $('hintLayer').hidden = false;
+  renderHintStep();
+}
+function renderHintStep() {
+  var st = H.steps[H.i], box = $('hintFrames');
+  box.innerHTML = '';
+  var used = st.cells.some(function (c, i) { return i >= 10 && c; }) || H.steps.some(function (s) { return s.cells.some(function (c, i) { return i >= 10 && c; }); });
+  var frames = used ? 2 : 1;
+  for (var f = 0; f < frames; f++) {
+    var fr = document.createElement('div'); fr.className = 'frame';
+    for (var k = 0; k < 10; k++) {
+      var c = st.cells[f * 10 + k], el = document.createElement('div');
+      el.className = 'cell' + (c ? ' ' + c.replace('*', '') : '') + (c.indexOf('*') >= 0 ? ' pop' : '');
+      if (c.indexOf('*') >= 0) el.style.animationDelay = (k * 0.08) + 's';
+      fr.appendChild(el);
+    }
+    box.appendChild(fr);
+  }
+  $('hintCaption').innerHTML = st.text;
+  $('hintDots').innerHTML = H.steps.map(function (_, i) { return '<span class="' + (i === H.i ? 'cur' : '') + '">●</span>'; }).join('');
+  $('hintPrev').disabled = H.i === 0;
+  $('hintNext').textContent = H.i === H.steps.length - 1 ? '我知道了' : '下一步';
+  speak(speakable(st.text.replace(/<br>/g, '，')));
+}
+$('hintBtn').addEventListener('click', openHint);
+$('hintPrev').addEventListener('click', function () { if (H.i > 0) { H.i--; renderHintStep(); } });
+$('hintNext').addEventListener('click', function () {
+  if (H.i < H.steps.length - 1) { H.i++; renderHintStep(); }
+  else { $('hintLayer').hidden = true; try { speechSynthesis.cancel(); } catch (e) {} }
+});
+$('hintLayer').addEventListener('click', function (e) { if (e.target === this) { this.hidden = true; try { speechSynthesis.cancel(); } catch (x) {} } });
+
+/* ---------- 启动 ---------- */
+initSpeech();
+updateSoundUI();
+renderHome();
+</script>
+</body>
+</html>
